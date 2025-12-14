@@ -35,6 +35,13 @@ An end-to-end AI system for predicting and managing airport congestion at securi
 │   ├── Dockerfile.backend
 │   ├── Dockerfile.frontend
 │   └── nginx.conf
+├── azure/                      # Azure deployment configs
+│   ├── setup-azure.sh          # Automated setup script
+│   ├── arm-template.json       # Infrastructure as Code
+│   └── AZURE_DEPLOYMENT.md     # Deployment guide
+├── .github/
+│   └── workflows/
+│       └── azure-deploy.yml    # CI/CD pipeline
 ├── docker-compose.yml
 ├── requirements.txt
 └── README.md
@@ -149,21 +156,46 @@ predictor.save('./saved_models/passenger_flow')
 - **Alert Panel**: Crowd surge warnings with severity levels
 - **Zone Overview**: All airport zones with status indicators
 
-## ☁️ Cloud Deployment
+## ☁️ Azure Cloud Deployment
 
-### AWS
+This project includes full **Azure Container Apps** deployment with CI/CD.
+
+### Quick Azure Deployment
+
 ```bash
-# Using AWS ECS
-aws ecs create-cluster --cluster-name airport-flow
-aws ecs register-task-definition --cli-input-json file://ecs-task.json
+# 1. Login to Azure
+az login
+
+# 2. Run automated setup
+chmod +x azure/setup-azure.sh
+./azure/setup-azure.sh
 ```
 
-### Azure
-```bash
-# Using Azure Container Instances
-az container create --resource-group myRG --name airport-flow \
-  --image myregistry.azurecr.io/airport-flow:latest --ports 80 5000
+### CI/CD with GitHub Actions
+
+The project includes automated deployment pipeline:
+
+1. **Add GitHub Secrets:**
+   - `AZURE_CREDENTIALS` - Azure Service Principal
+   - `ACR_USERNAME` - Container Registry username
+   - `ACR_PASSWORD` - Container Registry password
+
+2. **Push to main** - Auto-deploys to Azure!
+
+### Azure Architecture
+
 ```
+┌─────────────────────────────────────────────────────────┐
+│              Azure Container Apps Environment            │
+│  ┌──────────────────┐      ┌──────────────────┐        │
+│  │  Frontend App    │ ───▶ │  Backend App     │        │
+│  │  (React/Nginx)   │      │  (Flask/ML)      │        │
+│  │  External Access │      │  Internal Only   │        │
+│  └──────────────────┘      └──────────────────┘        │
+└─────────────────────────────────────────────────────────┘
+```
+
+📖 See [azure/AZURE_DEPLOYMENT.md](azure/AZURE_DEPLOYMENT.md) for detailed instructions.
 
 ## 🔧 Configuration
 
